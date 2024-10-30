@@ -6,6 +6,12 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 import streamlit as st
 
+
+# Get the database using the method we defined in pymongo_test_insert file
+from pymongo_get_database import get_database
+dbname = get_database()
+collection_name = dbname["blackScholesValues"]
+
 # title the plot
 st.write("Black Scholes is cool!")
 
@@ -83,6 +89,7 @@ if stockPrice and strikePrice and timeExp and riskFree and volatility:
         ax2.set_ylabel("Stock Price")
         st.pyplot(fig2)
 
+    
 
     # input desired purchase price for call and desired purchase price for put
     st.write("Define desired call and put purchase price")
