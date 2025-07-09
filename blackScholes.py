@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import streamlit as st
-
+from mysql_db import insert_input, insert_output
 
 # Get the database using the method we defined in pymongo_test_insert file
 from pymongo_get_database import get_database
@@ -14,6 +14,9 @@ collection_name = dbname["blackScholesValues"]
 
 # title the plot
 st.write("Black Scholes is cool!")
+
+
+
 
 # black scholes funtion which takes inputs and calculates values
 def blackScholes(r, S, K, T, sigma, option_type):
@@ -26,22 +29,27 @@ def blackScholes(r, S, K, T, sigma, option_type):
     return [float(callPrice), float(putPrice)]
 
 # getting user inputs for option parameters
-stockPrice = st.number_input("Enter Current Stock Price",value=None)
-strikePrice = st.number_input("Enter Option Strike Price", value=None)
-timeExp = st.number_input("Enter Time to Maturity(In Years)",value=None)
-volatility = st.number_input("Enter Volatility",value=None)
-riskFree = st.number_input("Enter Risk Free Rate",value=None)
+with st.sidebar:
+    stockPrice = st.number_input("Enter Current Stock Price",value=None)
+    strikePrice = st.number_input("Enter Option Strike Price", value=None)
+    timeExp = st.number_input("Enter Time to Maturity(In Years)",value=None)
+    volatility = st.number_input("Enter Volatility",value=None)
+    riskFree = st.number_input("Enter Risk Free Rate",value=None)
 
 if stockPrice and strikePrice and timeExp and riskFree and volatility:
     result = blackScholes(riskFree, stockPrice, strikePrice, timeExp, volatility, 'C') 
     st.write("Call Price: ", round(result[0],2))
     st.write("Put Price: ", round(result[1],2))
+    calc_id = insert_input(float(stockPrice), float(strikePrice), float(riskFree), float(volatility), float(timeExp))
+    st.write(calc_id)
 
-    st.write("Define ranges for stock price and volatility heatmaps")
-    stock_low = st.number_input("Enter lower bound for stock price range", value = stockPrice * 0.8)
-    stock_high = st.number_input("Enter upper bound for stock price range", value = stockPrice * 1.2)
-    volatility_low = st.number_input("Enter lower bound for volatility range", value = volatility * 0.5)
-    volatility_high = st.number_input("Enter upper bound for volatility range", value = volatility * 1.5)
+    
+    with st.sidebar:
+        st.write("Define ranges for stock price and volatility heatmaps")
+        stock_low = st.number_input("Enter lower bound for stock price range", value = stockPrice * 0.8)
+        stock_high = st.number_input("Enter upper bound for stock price range", value = stockPrice * 1.2)
+        volatility_low = st.number_input("Enter lower bound for volatility range", value = volatility * 0.5)
+        volatility_high = st.number_input("Enter upper bound for volatility range", value = volatility * 1.5)
 
     # generate heatmap for call and put prices
 
@@ -61,6 +69,9 @@ if stockPrice and strikePrice and timeExp and riskFree and volatility:
         for j, sigma in enumerate(volatilities):
             # calculate blackScholes value
             call, put = blackScholes(riskFree, S, strikePrice, timeExp, sigma, 'C')
+            insert_output(calc_id, float(S), float(sigma), float(call), is_call=1)
+            insert_output(calc_id, float(S), float(sigma), float(put), is_call=0)
+
             # store call and put in respective matrices
             call_prices[i, j] = call
             put_prices[i, j] = put
@@ -92,9 +103,10 @@ if stockPrice and strikePrice and timeExp and riskFree and volatility:
     
 
     # input desired purchase price for call and desired purchase price for put
-    st.write("Define desired call and put purchase price")
-    call_desired = st.number_input("Enter desired call price", value = None)
-    put_desired = st.number_input("Enter desired put price", value = None)
+    with st.sidebar:
+        st.write("Define desired call and put purchase price")
+        call_desired = st.number_input("Enter desired call price", value = None)
+        put_desired = st.number_input("Enter desired put price", value = None)
    
 
     if call_desired and put_desired:
